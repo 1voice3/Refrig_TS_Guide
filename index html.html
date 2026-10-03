@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.webmanifest">
+<title>Refrigerant Troubleshooting</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--ink:#111827;--muted:#6b7280;--line:#d1d5db;--blue:#2563eb;--green:#166534;--greenbg:#dcfce7;--red:#991b1b;--redbg:#fee2e2;--amber:#92400e;--amberbg:#fef3c7}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);padding-bottom:84px}
+header{position:sticky;top:0;z-index:5;background:#111827;color:white;padding:12px 14px;box-shadow:0 2px 8px #0002}
+h1{font-size:18px;margin:0 0 8px}.topline{display:flex;justify-content:space-between;gap:8px;align-items:center}
+nav{display:flex;gap:6px;overflow:auto}nav button,.btn{border:1px solid #cbd5e1;background:white;border-radius:9px;padding:9px 11px;font-weight:650;white-space:nowrap}
+nav button.active{background:#2563eb;color:#fff;border-color:#2563eb}
+main{max-width:900px;margin:auto;padding:12px}.page{display:none}.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;box-shadow:0 1px 2px #0000000b}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+label{font-size:12px;color:var(--muted);display:block;font-weight:700;margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1px solid #9ca3af;border-radius:9px;background:white}
+textarea{min-height:76px}.section{font-size:16px;font-weight:800;margin:4px 0 12px}
+.reading-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.snapshot-name{font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e5e7eb;padding:7px 5px;text-align:right}th:first-child,td:first-child{text-align:left}
+.warn{background:var(--redbg);color:var(--red);border:1px solid #fca5a5;border-radius:10px;padding:10px;margin:7px 0;font-weight:700}
+.ok{background:var(--greenbg);color:var(--green);border:1px solid #86efac;border-radius:10px;padding:10px;margin:7px 0}
+.caution{background:var(--amberbg);color:var(--amber);border:1px solid #fcd34d;border-radius:10px;padding:10px;margin:7px 0;font-weight:650}
+.diff-up{color:#b91c1c;font-weight:800}.diff-down{color:#166534;font-weight:800}.same{color:#6b7280}
+.badge{display:inline-block;padding:3px 7px;border-radius:99px;background:#e5e7eb;font-size:11px;font-weight:800}
+footer{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #d1d5db;padding:8px;z-index:6}.footerin{max-width:900px;margin:auto;display:flex;gap:8px}
+.footerin button{flex:1}.primary{background:#2563eb!important;color:white;border-color:#2563eb!important}.danger{background:#fee2e2!important;color:#991b1b}
+.small{font-size:12px;color:var(--muted)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header>
+ <div class="topline"><h1>Refrigerant Troubleshooting</h1><span id="snapCount" class="badge">0 / 10</span></div>
+ <nav>
+  <button class="tab active" data-page="call">Call</button>
+  <button class="tab" data-page="readings">Readings</button>
+  <button class="tab" data-page="analysis">Analysis</button>
+  <button class="tab" data-page="compare">Compare</button>
+  <button class="tab" data-page="notes">Notes</button>
+ </nav>
+</header>
+
+<main>
+<section id="call" class="page active">
+ <div class="card"><div class="section">Service call</div>
+  <div class="grid">
+   <div><label>Site location</label><input id="site"></div>
+   <div><label>Work order #</label><input id="wo"></div>
+   <div><label>Date</label><input id="date" type="date"></div>
+   <div><label>Technician</label><input id="tech"></div>
+   <div><label>Equipment type</label><input id="equipment"></div>
+   <div><label>Refrigerant</label><input id="refrigerant" placeholder="e.g. R-410A"></div>
+   <div><label>Airflow type</label><select id="airflowType"><option>CV</option><option>VAV</option><option>MUA</option></select></div>
+   <div><label>Compressor quantity</label><select id="compQty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+   <div><label>Compressor type(s)</label><input id="compType" value="Standard scroll"></div>
+   <div><label>Compressor arrangement</label><input id="compArrangement" value="Single compressor"></div>
+   <div><label>Compressor BTU total</label><input id="btu" type="number"></div>
+   <div><label>Compressor ID / schematic</label><input id="compId"></div>
+  </div>
+ </div>
+ <div class="card"><div class="section">Snapshot workflow</div>
+  <p class="small">Create a snapshot on arrival, then after airflow/refrigerant/expansion-valve changes, and again at departure. Each snapshot is retained in this device and compared with the previous snapshot.</p>
+  <div class="row"><button class="btn primary" onclick="newSnapshot()">Create current snapshot</button><button class="btn" onclick="clearAll()">New service call</button></div>
+ </div>
+</section>
+
+<section id="readings" class="page">
+ <div class="card"><div class="reading-head"><div><div class="section">Snapshot <span id="currentSnapLabel"></span></div><div class="small">Enter only measured values; calculated values update automatically.</div></div></div></div>
+
+ <div class="card"><div class="section">Airflow</div><div class="grid">
+  <div><label>Ambient temp °F</label><input data-k="ambientTemp" type="number" step=".1"></div>
+  <div><label>Ambient humidity % RH</label><input data-k="ambientRH" type="number" step=".1"></div>
+  <div><label>Static "WC</label><input data-k="static" type="number" step=".01"></div>
+  <div><label>CFM</label><input data-k="cfm" type="number"></div>
+  <div><label>VFD speed Hz</label><input data-k="vfdHz" type="number" step=".1"></div>
+  <div><label>Blower FLA rating A</label><input data-k="blowerFLA" type="number" step=".1"></div>
+  <div><label>Blower actual A leg</label><input data-k="blowerA" type="number" step=".1"></div>
+  <div><label>Blower actual B leg</label><input data-k="blowerB" type="number" step=".1"></div>
+  <div><label>Blower actual C leg</label><input data-k="blowerC" type="number" step=".1"></div>
+  <div><label>Return air temp °F</label><input data-k="returnTemp" type="number" step=".1"></div>
+  <div><label>Supply air temp °F</label><input data-k="supplyTemp" type="number" step=".1"></div>
+ </div><div id="airflowCalc"></div></div>
+
+ <div class="card"><div class="section">Refrigerant circuit</div><div class="grid">
+  <div><label>Current refrigerant charge lb/oz</label><input data-k="charge"></div>
+  <div><label>Suction pressure PSI</label><input data-k="suctionPSI" type="number" step=".1"></div>
+  <div><label>Suction pipe temp °F</label><input data-k="suctionPipe" type="number" step=".1"></div>
+  <div><label>Suction saturation temp °F</label><input data-k="suctionSat" type="number" step=".1"></div>
+  <div><label>Liquid pressure PSI</label><input data-k="liquidPSI" type="number" step=".1"></div>
+  <div><label>Liquid saturation temp °F</label><input data-k="liquidSat" type="number" step=".1"></div>
+  <div><label>Liquid pipe temp °F</label><input data-k="liquidPipe" type="number" step=".1"></div>
+  <div><label>Liquid-line drier temp drop °F</label><input data-k="drierTempDrop" type="number" step=".1"></div>
+  <div><label>Liquid-line drier pressure drop PSI</label><input data-k="drierPressureDrop" type="number" step=".1"></div>
+ </div><div id="refCalc"></div></div>
+
+ <div class="card"><div class="section">Compressor</div><div class="grid">
+  <div><label>Compressor RLA rating A</label><input data-k="compRLA" type="number" step=".1"></div>
+  <div><label>Actual A leg</label><input data-k="compA" type="number" step=".1"></div>
+  <div><label>Actual B leg</label><input data-k="compB" type="number" step=".1"></div>
+  <div><label>Actual C leg</label><input data-k="compC" type="number" step=".1"></div>
+  <div><label>Discharge pipe temp °F</label><input data-k="dischargeTemp" type="number" step=".1"></div>
+  <div><label>Discharge pressure PSI</label><input data-k="dischargePSI" type="number" step=".1"></div>
+  <div><label>True suction pressure PSI</label><input data-k="trueSuctionPSI" type="number" step=".1"></div>
+ </div><div id="compCalc"></div></div>
+
+ <div class="card"><div class="section">Condenser</div><div class="grid">
+  <div><label>Condenser inlet air temp °F</label><input data-k="condInlet" type="number" step=".1"></div>
+  <div><label>Outlet air temp — 12 o'clock °F</label><input data-k="cond12" type="number" step=".1"></div>
+  <div><label>Outlet air temp — 4 o'clock °F</label><input data-k="cond4" type="number" step=".1"></div>
+  <div><label>Outlet air temp — 8 o'clock °F</label><input data-k="cond8" type="number" step=".1"></div>
+ </div><div id="condCalc"></div></div>
+
+ <div class="card"><label><input id="fanCycling" type="checkbox" style="width:auto"> Fan cycling is occurring / suspected</label><div id="fanMsg"></div></div>
+</section>
+
+<section id="analysis" class="page">
+ <div class="card"><div class="section">Safety & diagnostic warnings</div><div id="warnings"></div></div>
+ <div class="card"><div class="section">Root-problem clues</div><div id="rootClues"></div></div>
+ <div class="card"><div class="section">Calculated values</div><div id="calcTable"></div></div>
+</section>
+
+<section id="compare" class="page">
+ <div class="card"><div class="section">Snapshot comparison</div><div class="small">Positive/negative changes are shown from the previous snapshot to the selected snapshot.</div>
+ <div class="grid"><div><label>From snapshot</label><select id="fromSnap"></select></div><div><label>To snapshot</label><select id="toSnap"></select></div></div>
+ <div id="compareTable" style="margin-top:10px"></div></div>
+</section>
+
+<section id="notes" class="page">
+ <div class="card"><div class="section">Background</div><textarea id="background"></textarea></div>
+ <div class="card"><div class="section">Symptoms</div><textarea id="symptoms"></textarea></div>
+ <div class="card"><div class="section">Assumptions</div><textarea id="assumptions"></textarea></div>
+ <div class="card"><div class="section">Corrections</div><textarea id="corrections"></textarea></div>
+ <div class="card"><div class="section">Other</div><textarea id="other"></textarea></div>
+ <div class="card"><button class="btn primary" onclick="exportComparePDF()">Export snapshot comparisons (PDF)</button> <button class="btn" onclick="exportJSON()">Export data (JSON)</button> <button class="btn" onclick="window.print()">Print</button></div>
+</section>
+</main>
+<footer><div class="footerin"><button class="btn" onclick="prevSnap()">← Previous</button><button class="btn primary" onclick="saveSnapshot()">Save snapshot</button><button class="btn" onclick="nextSnap()">Next →</button></div></footer>
+
+<script>
+const KEY="refrigTroubleshootingV1";
+const fields=["ambientTemp","ambientRH","static","cfm","vfdHz","blowerFLA","blowerA","blowerB","blowerC","returnTemp","supplyTemp","charge","suctionPSI","suctionPipe","suctionSat","liquidPSI","liquidSat","liquidPipe","drierTempDrop","drierPressureDrop","compRLA","compA","compB","compC","dischargeTemp","dischargePSI","trueSuctionPSI","condInlet","cond12","cond4","cond8"];
+const meta={site:"",wo:"",date:"",tech:"",equipment:"",refrigerant:"",airflowType:"CV",compQty:"1",compType:"Standard scroll",compArrangement:"Single compressor",btu:"",compId:"",background:"",symptoms:"",assumptions:"",corrections:"",other:""};
+let state=JSON.parse(localStorage.getItem(KEY)||"null")||{meta:{...meta},snapshots:[],current:0};
+function $(id){return document.getElementById(id)}
+function val(k){let e=document.querySelector(`[data-k="${k}"]`); return e?e.value:""}
+function num(k){let v=parseFloat(val(k));return Number.isFinite(v)?v:null}
+function setVal(k,v){let e=document.querySelector(`[data-k="${k}"]`);if(e)e.value=v??""}
+function calc(s){
+ const n=k=>{let v=parseFloat(s[k]);return Number.isFinite(v)?v:null};
+ const avg=(a,b,c)=>[a,b,c].filter(x=>x!=null).length?([a,b,c].filter(x=>x!=null).reduce((x,y)=>x+y,0)/[a,b,c].filter(x=>x!=null).length):null;
+ s.blowerAvg=avg(n("blowerA"),n("blowerB"),n("blowerC"));
+ s.blowerPct=n("blowerFLA")&&s.blowerAvg!=null?s.blowerAvg/n("blowerFLA"):null;
+ s.coolingDT=n("returnTemp")!=null&&n("supplyTemp")!=null?n("returnTemp")-n("supplyTemp"):null;
+ s.superheat=n("suctionPipe")!=null&&n("suctionSat")!=null?n("suctionPipe")-n("suctionSat"):null;
+ s.subcool=n("liquidSat")!=null&&n("liquidPipe")!=null?n("liquidSat")-n("liquidPipe"):null;
+ s.compAvg=avg(n("compA"),n("compB"),n("compC"));
+ s.compPct=n("compRLA")&&s.compAvg!=null?s.compAvg/n("compRLA"):null;
+ s.dischargePSIA=n("dischargePSI")!=null?n("dischargePSI")+15:null;
+ s.trueSuctionPSIA=n("trueSuctionPSI")!=null?n("trueSuctionPSI")+15:null;
+ s.ratio=s.dischargePSIA!=null&&s.trueSuctionPSIA>0?s.dischargePSIA/s.trueSuctionPSIA:null;
+ s.condOutAvg=avg(n("cond12"),n("cond4"),n("cond8"));
+ s.condDT=s.condOutAvg!=null&&n("condInlet")!=null?s.condOutAvg-n("condInlet"):null;
+ return s;
+}
+function current(){return state.snapshots[state.current]}
+function collect(){
+ let s={};fields.forEach(k=>s[k]=val(k));s.fanCycling=$("fanCycling").checked;return calc(s)
+}
+function save(){
+ state.meta={...meta};
+ ["site","wo","date","tech","equipment","refrigerant","airflowType","compQty","compType","compArrangement","btu","compId"].forEach(k=>{state.meta[k]=$(k).value});
+ ["background","symptoms","assumptions","corrections","other"].forEach(k=>state.meta[k]=$(k).value);
+ localStorage.setItem(KEY,JSON.stringify(state));updateCount();
+}
+function loadMeta(){
+ Object.entries(state.meta).forEach(([k,v])=>{if($(k))$(k).value=v??""});
+ $("date").value=state.meta.date||new Date().toISOString().slice(0,10);
+}
+function loadSnapshot(){
+ let s=current(); if(!s){fields.forEach(k=>setVal(k,""));$("fanCycling").checked=false;$("currentSnapLabel").textContent="—";return}
+ fields.forEach(k=>setVal(k,s[k]??""));$("fanCycling").checked=!!s.fanCycling;$("currentSnapLabel").textContent=`#${state.current+1}`;
+ renderAll()
+}
+function newSnapshot(){
+ if(state.snapshots.length>=10){alert("Maximum 10 snapshots, matching the workbook.");return}
+ if(!current()) state.snapshots.push(collect());
+ else saveSnapshot();
+ if(state.snapshots.length>=10){state.current=state.snapshots.length-1;loadSnapshot();goto("readings");save();return}
+ state.snapshots.push(calc({}));
+ state.current=state.snapshots.length-1;
+ loadSnapshot(); save(); goto("readings");
+}
+function saveSnapshot(){if(!current()){state.snapshots.push(collect());state.current=0}else state.snapshots[state.current]=collect();save();renderAll()}
+function prevSnap(){saveSnapshot();if(state.current>0){state.current--;loadSnapshot()}}
+function nextSnap(){saveSnapshot();if(state.current<state.snapshots.length-1){state.current++;loadSnapshot()}else if(state.snapshots.length<10){newSnapshot()}}
+function updateCount(){$("snapCount").textContent=`${state.snapshots.length} / 10`}
+function goto(p){document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id===p));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.page===p))}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{saveSnapshot();goto(b.dataset.page);renderAll()});
+document.addEventListener("input",e=>{if(e.target.matches("input,select,textarea")){saveSnapshot();renderAll()}});
+function f(x,d=1){return x==null?"—":Number(x).toFixed(d)}
+function alertBox(text,kind="warn"){return `<div class="${kind}">${text}</div>`}
+function renderAll(){
+ let s=current()||calc({});
+ let blowerPct=s.blowerPct, compPct=s.compPct;
+ $("airflowCalc").innerHTML=`<div class="grid3"><div><label>Blower average</label><b>${f(s.blowerAvg)} A</b></div><div><label>Blower % FLA</label><b>${f(blowerPct*100)}%</b></div><div><label>Cooling ΔT</label><b>${f(s.coolingDT)} °F</b></div></div>`;
+ $("refCalc").innerHTML=`<div class="grid3"><div><label>Superheat</label><b>${f(s.superheat)} °F</b></div><div><label>Subcool</label><b>${f(s.subcool)} °F</b></div><div><label>Drier temp drop</label><b>${f(parseFloat(s.drierTempDrop))} °F</b></div></div>`;
+ $("compCalc").innerHTML=`<div class="grid3"><div><label>Compressor average</label><b>${f(s.compAvg)} A</b></div><div><label>Compressor % RLA</label><b>${f(compPct*100)}%</b></div><div><label>Compression ratio</label><b>${f(s.ratio,2)}:1</b></div></div>`;
+ $("condCalc").innerHTML=`<div class="grid3"><div><label>Condenser outlet avg.</label><b>${f(s.condOutAvg)} °F</b></div><div><label>Condenser ΔT</label><b>${f(s.condDT)} °F</b></div><div><label>Fan cycling</label><b>${s.fanCycling?"YES":"No"}</b></div></div>`;
+ let warns=[];
+ const pct=(v)=>v==null?null:v*100;
+ if(pct(s.blowerPct)>=86) warns.push("Blower motor is at <b>86% FLA or higher</b>.");
+ if(pct(s.compPct)>=86) warns.push("Compressor is at <b>86% RLA or higher</b>.");
+ if(s.dischargeTemp!=null&&+s.dischargeTemp>=186) warns.push("Compressor discharge pipe temperature is <b>186°F or higher</b>.");
+ if(s.superheat!=null&&(s.superheat<8||s.superheat>25)) warns.push(`Superheat is <b>${f(s.superheat)}°F</b> — outside 8–25°F.`);
+ if(s.subcool!=null&&(s.subcool<=1||s.subcool>20)) warns.push(`Subcooling is <b>${f(s.subcool)}°F</b> — at/below 1°F or above 20°F.`);
+ if(parseFloat(s.drierTempDrop)>1) warns.push(`Liquid-line drier temperature drop is <b>${f(parseFloat(s.drierTempDrop))}°F</b> — above 1°F.`);
+ if(parseFloat(s.drierPressureDrop)>5) warns.push(`Liquid-line drier pressure drop is <b>${f(parseFloat(s.drierPressureDrop))} PSI</b> — above 5 PSI.`);
+ if(s.ratio!=null&&(s.ratio>4.25||s.ratio<2)) warns.push(`Compressor ratio is <b>${f(s.ratio,2)}:1</b> — outside 2:1 to 4.25:1.`);
+ if(s.fanCycling) warns.push("Fan cycling is occurring/suspected: <b>superheat, subcooling and amperage can fluctuate dramatically.</b> Take multiple readings and document the fan state.");
+ $("warnings").innerHTML=warns.length?warns.map(x=>alertBox(x)).join(""):alertBox("No configured threshold warnings for the values currently entered.","ok");
+ let clues=[];
+ if(parseFloat(s.drierTempDrop)>1||parseFloat(s.drierPressureDrop)>5) clues.push("<b>Liquid-line restriction clue:</b> elevated drier temperature/pressure drop. Verify inlet/outlet conditions and airflow before concluding.");
+ if(s.superheat!=null&&s.subcool!=null){
+   if(s.superheat>25&&s.subcool<1) clues.push("<b>Starved evaporator / charge or restriction pattern:</b> high superheat with very low subcooling. Verify charge, liquid feed, drier, TXV and airflow.");
+   if(s.superheat<8&&s.subcool>20) clues.push("<b>Flooding / overfeeding pattern:</b> low superheat with high subcooling. Verify TXV operation, load, airflow and charge.");
+ }
+ if(s.blowerPct>=.86) clues.push("<b>Blower loading clue:</b> motor current is ≥86% FLA. Check airflow/static, filters, duct restrictions, bearings and motor/VFD operation.");
+ if(s.compPct>=.86) clues.push("<b>Compressor loading clue:</b> current is ≥86% RLA. Correlate with head pressure, suction pressure, compression ratio and condenser condition.");
+ if(s.dischargeTemp>=186) clues.push("<b>High discharge-temperature clue:</b> verify superheat, suction condition, condenser airflow, charge and compressor operating condition.");
+ if(s.ratio!=null&&s.ratio>4.25) clues.push("<b>High compression-ratio clue:</b> compare condensing pressure, suction pressure, condenser airflow and liquid-line condition.");
+ if(s.ratio!=null&&s.ratio<2) clues.push("<b>Low compression-ratio clue:</b> verify operating load, pressure measurements and compressor pumping condition.");
+ if(s.coolingDT!=null&&s.static!=null) clues.push("<b>Airflow correlation:</b> use ΔT, static, CFM, VFD Hz and blower %FLA together rather than relying on one measurement.");
+ if(!clues.length) clues.push("Enter the circuit and airflow readings to generate pattern clues. These are troubleshooting prompts, not a substitute for the equipment manufacturer's operating data.");
+ $("rootClues").innerHTML=clues.map(x=>`<div class="card" style="margin:7px 0">${x}</div>`).join("");
+ $("calcTable").innerHTML=`<table><tr><th>Value</th><th>Result</th></tr>${[
+ ["Blower average",f(s.blowerAvg)+" A"],["Blower % FLA",f(pct(s.blowerPct))+"%"],["Cooling ΔT",f(s.coolingDT)+" °F"],["Superheat",f(s.superheat)+" °F"],["Subcooling",f(s.subcool)+" °F"],["Compressor average",f(s.compAvg)+" A"],["Compressor % RLA",f(pct(s.compPct))+"%"],["Discharge pressure absolute",f(s.dischargePSIA)+" PSIA"],["True suction absolute",f(s.trueSuctionPSIA)+" PSIA"],["Compression ratio",f(s.ratio,2)+":1"],["Condenser outlet avg.",f(s.condOutAvg)+" °F"],["Condenser ΔT",f(s.condDT)+" °F"]
+ ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`;
+ updateCompare();
+}
+const compareFields=[["Ambient temp","ambientTemp","°F"],["Ambient RH","ambientRH","%"],["Static","static",'"WC'],["CFM","cfm","CFM"],["VFD speed","vfdHz","Hz"],["Blower % FLA","blowerPct","%"],["Cooling ΔT","coolingDT","°F"],["Charge","charge",""],["Suction pressure","suctionPSI","PSI"],["Superheat","superheat","°F"],["Liquid pressure","liquidPSI","PSI"],["Subcooling","subcool","°F"],["Drier temp drop","drierTempDrop","°F"],["Drier pressure drop","drierPressureDrop","PSI"],["Compressor % RLA","compPct","%"],["Discharge temp","dischargeTemp","°F"],["Discharge pressure","dischargePSI","PSI"],["Compression ratio","ratio",":1"],["Condenser ΔT","condDT","°F"]];
+function updateCompare(){
+ let a=$("fromSnap"),b=$("toSnap");let oldA=a.value,oldB=b.value;
+ a.innerHTML=state.snapshots.map((_,i)=>`<option value="${i}">Snapshot ${i+1}</option>`).join("");b.innerHTML=a.innerHTML;
+ a.value=oldA||String(Math.max(0,state.current-1));b.value=oldB||String(state.current);
+ if(state.snapshots.length<2){$("compareTable").innerHTML="<div class='caution'>Create at least two snapshots to compare readings.</div>";return}
+ let x=state.snapshots[+a.value],y=state.snapshots[+b.value];
+ let rows=compareFields.map(([name,k,u])=>{let xv=parseFloat(x[k]),yv=parseFloat(y[k]);if(!Number.isFinite(xv)||!Number.isFinite(yv))return`<tr><td>${name}</td><td>${xv??"—"}</td><td>${yv??"—"}</td><td>—</td></tr>`;let d=yv-xv;return`<tr><td>${name}</td><td>${f(xv)}</td><td>${f(yv)}</td><td class="${d>0?"diff-up":d<0?"diff-down":"same"}">${d>0?"+":""}${f(d)} ${u}</td></tr>`}).join("");
+ $("compareTable").innerHTML=`<table><tr><th>Reading</th><th>From</th><th>To</th><th>Difference</th></tr>${rows}</table>`;
+}
+$("fromSnap").onchange=updateCompare;$("toSnap").onchange=updateCompare;
+function clearAll(){if(!confirm("Start a new service record? The current record will be cleared from this device."))return;state={meta:{...meta},snapshots:[],current:0};localStorage.setItem(KEY,JSON.stringify(state));loadMeta();loadSnapshot();updateCount();renderAll()}
+function exportJSON(){saveSnapshot();let blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`refrigerant-service-${state.meta.wo||"record"}.json`;a.click()}
+/* ---------- Compare -> PDF export (no external libraries, works offline) ---------- */
+function pdfClean(s){
+ return String(s).replace(/Δ/g,"delta ").replace(/[—–]/g,"-").replace(/[→]/g,"to")
+  .replace(/[^\x20-\xFF]/g,"?").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
+}
+function buildComparePDF(){
+ const snaps=state.snapshots, m=state.meta||{};
+ const pages=[]; let ops=[], y=0;
+ const L=40, TOP=752, BOT=50, LH=14;
+ const cols=[L,250,340,430];
+ const txt=(x,yy,t,bold,size=9,color="0 0 0")=>ops.push(`${color} rg BT /${bold?"F2":"F1"} ${size} Tf ${x} ${yy} Td (${pdfClean(t)}) Tj ET`);
+ const newPage=()=>{if(ops.length)pages.push(ops.join("\n"));ops=[];y=TOP};
+ const need=h=>{if(y-h<BOT)newPage()};
+ newPage();
+ txt(L,y,"Refrigerant Troubleshooting - Snapshot Comparisons",true,15);y-=20;
+ const info=[["Site",m.site],["Work order",m.wo],["Date",m.date],["Technician",m.tech],["Equipment",m.equipment],["Refrigerant",m.refrigerant]].filter(r=>r[1]);
+ info.forEach(([k,v])=>{txt(L,y,`${k}: ${v}`,false,10);y-=LH});
+ y-=6;
+ if(snaps.length<2){
+  txt(L,y,"Create at least two snapshots to compare readings.",false,10);
+ }else{
+  for(let i=0;i<snaps.length-1;i++){
+   const x=snaps[i], z=snaps[i+1];
+   need(LH*4);
+   txt(L,y,`Snapshot ${i+1} to Snapshot ${i+2}`,true,12);y-=LH+4;
+   ["Reading","From","To","Difference"].forEach((h,c)=>txt(cols[c],y,h,true,9));
+   y-=4;ops.push(`0.6 G ${L} ${y} m 572 ${y} l S`);y-=LH-2;
+   compareFields.forEach(([name,k,u])=>{
+    need(LH);
+    const pct=(k==="blowerPct"||k==="compPct")?100:1, dec=k==="ratio"?2:1;
+    const xv=parseFloat(x[k])*pct, yv=parseFloat(z[k])*pct;
+    txt(cols[0],y,name,false,9);
+    if(!Number.isFinite(xv)||!Number.isFinite(yv)){
+     txt(cols[1],y,Number.isFinite(xv)?f(xv,dec):"-",false,9);
+     txt(cols[2],y,Number.isFinite(yv)?f(yv,dec):"-",false,9);
+     txt(cols[3],y,"-",false,9);
+    }else{
+     const d=yv-xv, col=d>0?"0.72 0.11 0.11":d<0?"0.09 0.4 0.2":"0.4 0.4 0.4";
+     txt(cols[1],y,f(xv,dec),false,9);txt(cols[2],y,f(yv,dec),false,9);
+     txt(cols[3],y,`${d>0?"+":""}${f(d,dec)} ${u}`,true,9,col);
+    }
+    y-=LH;
+   });
+   y-=10;
+  }
+ }
+ pages.push(ops.join("\n"));
+ // assemble PDF (all characters are <= 0xFF so string length == byte length)
+ const objs=[];
+ objs[1]="<< /Type /Catalog /Pages 2 0 R >>";
+ const kids=pages.map((_,i)=>`${5+i*2} 0 R`).join(" ");
+ objs[2]=`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`;
+ objs[3]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+ objs[4]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+ pages.forEach((c,i)=>{
+  const p=5+i*2;
+  objs[p]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${p+1} 0 R >>`;
+  objs[p+1]=`<< /Length ${c.length} >>\nstream\n${c}\nendstream`;
+ });
+ let out="%PDF-1.4\n",offs=[];
+ for(let i=1;i<objs.length;i++){offs[i]=out.length;out+=`${i} 0 obj\n${objs[i]}\nendobj\n`}
+ const xref=out.length;
+ out+=`xref\n0 ${objs.length}\n0000000000 65535 f \n`+offs.slice(1).map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("");
+ out+=`trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+ const bytes=new Uint8Array(out.length);for(let i=0;i<out.length;i++)bytes[i]=out.charCodeAt(i)&255;
+ return bytes;
+}
+function exportComparePDF(){
+ saveSnapshot();
+ const blob=new Blob([buildComparePDF()],{type:"application/pdf"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download=`snapshot-comparisons-${state.meta.wo||"record"}.pdf`;
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+loadMeta();updateCount();loadSnapshot();renderAll();
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./service-worker.js").catch(()=>{});}</script></body>
+</html>
